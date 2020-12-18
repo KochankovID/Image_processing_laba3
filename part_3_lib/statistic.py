@@ -106,7 +106,7 @@ def histogram_circles(
     max_value: int,
     hist_size: int = 10
 ):
-    x, y, radiuses = map(list,zip(*circles))
+    _x, _y, radiuses = map(list,zip(*circles))
     radiuses = np.array(radiuses, dtype=np.uint8)
 
     hist_w = 800
