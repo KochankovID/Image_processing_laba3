@@ -1,43 +1,45 @@
-import numpy as np
+import numpy
+import math as m
 from scipy import ndimage
 from scipy.ndimage.filters import convolve
 
 
 def operator_sobel(img):
-    grad_x = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
-    grad_y = np.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], np.float32)
-    gorizonial = ndimage.filters.convolve(img, grad_x)
-    vertical = ndimage.filters.convolve(img, grad_y)
-    g_res = np.hypot(gorizonial, vertical)
+    grad_y = numpy.array([[-1, -2, -1], [0, 0, 0], [1, 2, 1]], float)
+    grad_x = numpy.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], float)
+    gorizontal = convolve(img, grad_x)
+    vertical = convolve(img, grad_y)
+    g_res = numpy.hypot(gorizontal, vertical)
     g_res = g_res / g_res.max() * 255
-    theta = np.arctan2(vertical, gorizonial)
+    theta = numpy.arctan2(vertical, gorizontal)
     return g_res, theta
 
 
 def leave_pacification(image, teta):
     a, b = image.shape
-    value = np.zeros((a, b), dtype=np.int32)
+    value = numpy.zeros(image.shape, int, 'C')
     corner = teta * 180. / 3.1415
     corner[corner < 0] += 180
-
-    for i in range(1, a - 1):
-        for j in range(1, b - 1):
+    i = 1
+    while i < a - 1:
+        j = 1
+        while j < b - 1:
             qt = 255
             rt = 255
 
-            if (0 <= corner[i, j] < 22.5) or (157.5 <= corner[i, j] <= 180):
+            if (m.degrees(0) <= corner[i, j] < m.degrees(m.pi/8)) or (m.degrees(m.pi/8 * 7) <= corner[i, j] <= m.degrees(m.pi)):
                 qt = image[i, j + 1]
                 rt = image[i, j - 1]
 
-            elif 22.5 <= corner[i, j] < 67.5:
+            elif m.degrees(m.pi/8) <= corner[i, j] < m.degrees(m.pi/8 * 3):
                 qt = image[i + 1, j - 1]
                 rt = image[i - 1, j + 1]
 
-            elif 67.5 <= corner[i, j] < 112.5:
+            elif m.degrees(m.pi/8 * 3) <= corner[i, j] < m.degrees(m.pi/8 * 5):
                 qt = image[i + 1, j]
                 rt = image[i - 1, j]
 
-            elif 112.5 <= corner[i, j] < 157.5:
+            elif m.degrees(m.pi/8 * 5) <= corner[i, j] < m.degrees(m.pi/8 * 7):
                 qt = image[i - 1, j - 1]
                 rt = image[i + 1, j + 1]
 
@@ -46,28 +48,27 @@ def leave_pacification(image, teta):
             else:
                 value[i, j] = 0
 
+            j += 1
+        i += 1
     return value
 
 
 def gauss(sz, sgm=1):
     sz = int(sz) // 2
-    x, y = np.mgrid[-sz:sz + 1, -sz:sz + 1]
-    ideal = 1 / (2.0 * 3.1415 * sgm ** 2)
-    g = np.exp(-((x ** 2 + y ** 2) / (2.0 * sgm ** 2))) * ideal
+    x, y = numpy.mgrid[-sz:sz + 1, -sz:sz + 1]
+    ideal = 1 / (2 * 3.1415 * numpy.square(sgm))
+    g = numpy.exp(-0.5 * (numpy.square(x) + numpy.square(y)) / numpy.square(sgm)) * ideal
     return g
 
 
 def thresholds(image, low_pix, heavy_pix, threshold1, threshold2):
     threshold2 = image.max() * threshold2
     threshold1 = threshold2 * threshold1
-    a, b = image.shape
-    result = np.zeros((a, b), dtype=np.int32)
-    low = np.int32(low_pix)
-    heavy = np.int32(heavy_pix)
-    low_i, heavy_j = np.where(image >= threshold2)
-    weak_i, weak_j = np.where((image <= threshold2) & (image >= threshold1))
-    result[low_i, heavy_j] = heavy
-    result[weak_i, weak_j] = low
+    result = numpy.zeros(image.shape, int)
+    heavy_i, heavy_j = numpy.where(image >= threshold2)
+    low_i, low_j = numpy.where((image <= threshold2) & (image >= threshold1))
+    result[heavy_i, heavy_j] = heavy_pix
+    result[low_i, low_j] = low_pix
     return result
 
 
@@ -75,16 +76,20 @@ def dependence(image, low_pix, heavy_pix):
     a, b = image.shape
     low = low_pix
     heavy = heavy_pix
-    for i in range(1, a - 1):
-        for j in range(1, b - 1):
+    i = 1
+    while i < a - 1:
+        j = 1
+        while j < b - 1:
             if image[i, j] == low:
-                if ((image[i + 1, j - 1] == heavy) or (image[i + 1, j] == heavy) or (image[i + 1, j + 1] == heavy)
-                        or (image[i, j - 1] == heavy) or (image[i, j + 1] == heavy)
-                        or (image[i - 1, j - 1] == heavy) or (image[i - 1, j] == heavy) or (
-                                image[i - 1, j + 1] == heavy)):
+                if ((image[i + 1, j - 1] or image[i + 1, j] or image[i + 1, j + 1]
+                        or image[i, j - 1] or image[i, j + 1]
+                        or image[i - 1, j - 1] or image[i - 1, j]
+                        or image[i - 1, j + 1]) == heavy):
                     image[i, j] = heavy
                 else:
                     image[i, j] = 0
+            j += 1
+        i += 1
     return image
 
 
