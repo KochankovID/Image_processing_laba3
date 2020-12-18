@@ -100,13 +100,14 @@ def same_already_in(
 
     return have_same
 
+
 def histogram_circles(
     circles: list,
     min_value: int,
     max_value: int,
     hist_size: int = 10
 ):
-    _x, _y, radiuses = map(list,zip(*circles))
+    _x, _y, radiuses = map(list, zip(*circles))
     radiuses = np.array(radiuses, dtype=np.uint8)
 
     hist_w = 800
@@ -121,8 +122,8 @@ def histogram_circles(
     cv2.normalize(hist_item, hist_item, hist_h, cv2.NORM_MINMAX)
 
     hist_item = hist_item.flatten()
-    for i in range(len(hist_item)):
-        cv2.rectangle(hist, (i * bin_w, hist_item[i]), (i * bin_w + bin_w - 1, hist_h), (255), -1)
+    for x, y in enumerate(hist_item):
+        cv2.rectangle(hist, (x * bin_w, y), (x * bin_w + bin_w - 1, hist_h), (255), -1)
 
     hist = np.flipud(hist)
 
