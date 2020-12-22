@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 import cv2
 import os.path as osp
 import numpy as np
@@ -23,7 +22,3 @@ edges = cv2.Canny(img, 50, 150, apertureSize=3)
 cv2.imshow('canny opencv', np.uint8(edges))
 create_two_windows(np.uint8(result_img), np.uint8(img), 'canny', 'source image')
 cv2.waitKey()
-=======
-if __name__ == "__main__":
-    print('Hello world!')
->>>>>>> 7afc024f2d2ab7757b3f4f120ce729a02b3954ce
